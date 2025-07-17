@@ -14,3 +14,7 @@ build-fprime-*
 /.vscode/
 .DS_Store
 *.gcov
+
+# ComLogger Files
+*.com
+*.com32
