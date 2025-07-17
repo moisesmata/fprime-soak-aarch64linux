@@ -17,4 +17,4 @@ build-fprime-*
 
 # ComLogger Files
 *.com
-*.com32
+*.CRC32

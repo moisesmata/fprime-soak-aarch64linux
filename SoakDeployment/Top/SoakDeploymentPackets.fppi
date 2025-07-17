@@ -11,16 +11,16 @@ telemetry packets SoakDeploymentPackets {
     FileHandling.fileDownlink.PacketsSent
     FileHandling.fileManager.CommandsExecuted
 
-    ComCcsds.cmdSeq.CS_LoadCommands
-    ComCcsds.cmdSeq.CS_CancelCommands
-    ComCcsds.cmdSeq.CS_CommandsExecuted
-    ComCcsds.cmdSeq.CS_SequencesCompleted
-    ComCcsds.comQueue.comQueueDepth
-    ComCcsds.comQueue.buffQueueDepth
-    ComCcsds.commsBufferManager.TotalBuffs
-    ComCcsds.commsBufferManager.CurrBuffs
-    ComCcsds.commsBufferManager.HiBuffs
-    #ComCcsds.tlmSend.SendLevel
+    ComFprime.cmdSeq.CS_LoadCommands
+    ComFprime.cmdSeq.CS_CancelCommands
+    ComFprime.cmdSeq.CS_CommandsExecuted
+    ComFprime.cmdSeq.CS_SequencesCompleted
+    ComFprime.comQueue.comQueueDepth
+    ComFprime.comQueue.buffQueueDepth
+    ComFprime.commsBufferManager.TotalBuffs
+    ComFprime.commsBufferManager.CurrBuffs
+    ComFprime.commsBufferManager.HiBuffs
+    #ComFprime.tlmSend.SendLevel
 
     SoakDeployment.rateGroup1.RgMaxTime
     SoakDeployment.rateGroup2.RgMaxTime
@@ -34,9 +34,9 @@ telemetry packets SoakDeploymentPackets {
     FileHandling.fileDownlink.Warnings
     FileHandling.fileManager.Errors
 
-    ComCcsds.cmdSeq.CS_Errors
-    ComCcsds.commsBufferManager.NoBuffs
-    ComCcsds.commsBufferManager.EmptyBuffs
+    ComFprime.cmdSeq.CS_Errors
+    ComFprime.commsBufferManager.NoBuffs
+    ComFprime.commsBufferManager.EmptyBuffs
 
     SoakDeployment.rateGroup1.RgCycleSlips
     SoakDeployment.rateGroup2.RgCycleSlips

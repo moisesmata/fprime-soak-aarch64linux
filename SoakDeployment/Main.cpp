@@ -77,8 +77,8 @@ int main(int argc, char* argv[]) {
     }
     // Object for communicating state to the reference topology
     SoakDeployment::TopologyState inputs;
-    inputs.comCcsds.hostname = hostname;
-    inputs.comCcsds.port = port_number;
+    inputs.comFprime.hostname = hostname;
+    inputs.comFprime.port = port_number;
 
     // Setup program shutdown via Ctrl-C
     signal(SIGINT, signalHandler);

@@ -7,14 +7,14 @@
 #define SOAKDEPLOYMENT_SOAKDEPLOYMENTTOPOLOGYDEFS_HPP
 //Subtopology PingEntries includes
 #include "Svc/Subtopologies/CdhCore/PingEntries.hpp"
-#include "Svc/Subtopologies/ComCcsds/PingEntries.hpp"
+#include "Svc/Subtopologies/ComFprime/PingEntries.hpp"
 #include "Svc/Subtopologies/DataProducts/PingEntries.hpp"
 #include "Svc/Subtopologies/FileHandling/PingEntries.hpp"
 #include "EventLoggerTee/PingEntries.hpp"
 #include "TlmLoggerTee/PingEntries.hpp"
 
 //SubtopologyTopologyDefs includes
-#include "Svc/Subtopologies/ComCcsds/SubtopologyTopologyDefs.hpp"
+#include "Svc/Subtopologies/ComFprime/SubtopologyTopologyDefs.hpp"
 #include "Svc/Subtopologies/DataProducts/SubtopologyTopologyDefs.hpp"
 #include "Svc/Subtopologies/FileHandling/SubtopologyTopologyDefs.hpp"
 #include "SoakDeployment/Top/FppConstantsAc.hpp"
@@ -55,7 +55,7 @@ namespace SoakDeployment {
  * the subtopology state structures which are derived from command line inputs.
  */
 struct TopologyState {
-    ComCcsds::SubtopologyState comCcsds;  //!< Subtopology state for ComCcsds
+    ComFprime::SubtopologyState comFprime;  //!< Subtopology state for ComFprime
 };
 
 namespace PingEntries = ::PingEntries;
