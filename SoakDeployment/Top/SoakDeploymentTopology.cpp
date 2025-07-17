@@ -47,10 +47,10 @@ void configureTopology(const TopologyState& state) {
 
     // Configure ComLogger instances for logging
     // Initialize Event Logger with 1MB max file size
-    EventLoggerTee::comLog.init_log_file("ComLogger/Events/", 1024 * 1024, true);
+    EventLoggerTee::comLog.init_log_file("ComLogger/Events", 1024 * 1024, true);
     
     // Initialize Telemetry Logger with 1MB max file size  
-    TlmLoggerTee::comLog.init_log_file("ComLogger/Tlm/", 1024 * 1024, true);
+    TlmLoggerTee::comLog.init_log_file("ComLogger/Tlm", 1024 * 1024, true);
 }
 
 // Public functions for use in main program are namespaced with deployment name SoakDeployment
