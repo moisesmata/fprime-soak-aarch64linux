@@ -1,0 +1,16 @@
+; Soak deployment test sequence
+; This sequence tests basic functionality of the SoakDeployment
+
+R00:00:00 CdhCore.cmdDisp.CMD_NO_OP
+
+; Test commands with arguments for soak deployment
+R00:00:01.000 CdhCore.cmdDisp.CMD_NO_OP_STRING "Soak deployment sequence test";
+
+; Another NO-OP to verify sequencing
+R00:00:02.000 CdhCore.cmdDisp.CMD_NO_OP
+
+; Test with another string command  
+R00:00:03.000 CdhCore.cmdDisp.CMD_NO_OP_STRING "Long running soak test sequence";
+
+; Final NO-OP command
+R00:00:04.000 CdhCore.cmdDisp.CMD_NO_OP 

@@ -1,0 +1,6 @@
+# output files from pytest and test API.
+assets
+*.html
+logs/
+# Generated sequence binaries
+*.bin 
