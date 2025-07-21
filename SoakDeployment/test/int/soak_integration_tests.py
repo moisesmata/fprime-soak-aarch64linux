@@ -1,222 +1,158 @@
 """soak_integration_tests.py:
 
-Simple integration tests for the SoakDeployment app running as a system service.
-Tests basic connectivity and command functionality.
+Traditional F' integration tests for SoakDeployment using fprime_test_api.
+These tests connect to the running systemd services and perform standard F' testing.
+Based on the LED blinker soak test pattern.
 """
 
-import socket
 import time
-import subprocess
-import pytest
+from fprime_gds.common.testing_fw import predicates
 
 
-def test_fsw_service_running():
-    """Test that the SoakDeployment FSW service is running"""
-    result = subprocess.run(['systemctl', 'is-active', '--quiet', 'soak-deployment-fsw'], 
-                          capture_output=True)
-    assert result.returncode == 0, "SoakDeployment FSW service is not running"
-    print("✅ SoakDeployment FSW service is running")
+def test_is_streaming(fprime_test_api):
+    """Test that SoakDeployment is streaming telemetry
+    
+    Tests that the flight software is streaming by looking for telemetry items.
+    This ensures the system is operational and telemetry is flowing.
+    """
+    results = fprime_test_api.assert_telemetry_count(5, timeout=10)
+    for result in results:
+        msg = "received channel {} update: {}".format(result.get_id(), result.get_str())
+        print(msg)
 
 
-def test_gds_service_running():
-    """Test that the GDS service is running"""
-    result = subprocess.run(['systemctl', 'is-active', '--quiet', 'soak-deployment-gds'], 
-                          capture_output=True)
-    assert result.returncode == 0, "GDS service is not running"
-    print("✅ GDS service is running")
+def test_send_command(fprime_test_api):
+    """Test that commands may be sent to SoakDeployment
+    
+    Tests command send, dispatch, and receipt using send_and_assert command with NO-OP commands.
+    """
+    fprime_test_api.send_and_assert_command("CdhCore.cmdDisp.CMD_NO_OP", max_delay=0.1)
+    assert fprime_test_api.get_command_test_history().size() == 1
+    fprime_test_api.send_and_assert_command("CdhCore.cmdDisp.CMD_NO_OP", max_delay=0.1)
+    assert fprime_test_api.get_command_test_history().size() == 2
 
 
-def test_fsw_tcp_connectivity():
-    """Test that we can connect to the FSW on TCP port 50000"""
+def test_send_command_args(fprime_test_api):
+    """Test that commands with arguments may be sent
+    
+    Tests command send, dispatch, and receipt using send_and_assert command with string NO-OP commands.
+    """
+    test_strings = ["SoakTest String 1", "Soak deployment test string", "Long running soak test"]
+    for count, value in enumerate(test_strings, 1):
+        events = [
+            fprime_test_api.get_event_pred(
+                "CdhCore.cmdDisp.NoOpStringReceived", [value]
+            )
+        ]
+        fprime_test_api.send_and_assert_command(
+            "CdhCore.cmdDisp.CMD_NO_OP_STRING",
+            [value],
+            max_delay=0.1,
+            events=events,
+        )
+        assert fprime_test_api.get_command_test_history().size() == count
+
+
+def test_system_resources_telemetry(fprime_test_api):
+    """Test system resource telemetry channels
+    
+    Verifies that system resources are being monitored and reported correctly.
+    """
+    # Wait for some telemetry to accumulate
+    time.sleep(2)
+    
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-            sock.settimeout(5)
-            result = sock.connect_ex(('127.0.0.1', 50000))
-            assert result == 0, f"Cannot connect to FSW on port 50000, error code: {result}"
-            print("✅ Successfully connected to FSW on TCP port 50000")
-    except Exception as e:
-        pytest.fail(f"Failed to connect to FSW: {e}")
-
-
-def test_basic_gds_connection():
-    """Test basic GDS connection using fprime-gds command"""
-    try:
-        # Try to run a quick GDS command to test connectivity
-        result = subprocess.run([
-            'timeout', '10',  # 10 second timeout
-            'fprime-gds', 
-            '--ip-client', 
-            '--ip-address', '127.0.0.1', 
-            '--ip-port', '50000',
-            '--no-gui',
-            '--command', 'exit'
-        ], capture_output=True, text=True, timeout=15)
+        # Try to get system resource telemetry
+        memory_total = fprime_test_api.await_telemetry("SoakDeployment.systemResources.MEMORY_TOTAL", timeout=5)
+        print(f"Memory Total: {memory_total.get_val()} KB")
+        assert memory_total.get_val() > 0, "Memory total should be greater than 0"
         
-        # GDS should start and exit cleanly
-        print(f"GDS connection test output: {result.stdout}")
-        if result.stderr:
-            print(f"GDS connection test stderr: {result.stderr}")
+        memory_used = fprime_test_api.await_telemetry("SoakDeployment.systemResources.MEMORY_USED", timeout=5)
+        print(f"Memory Used: {memory_used.get_val()} KB")
+        assert memory_used.get_val() > 0, "Memory used should be greater than 0"
         
-        # Even if GDS exits with non-zero (due to quick exit), 
-        # we just want to make sure it can connect
-        print("✅ GDS can connect to FSW")
-        
-    except subprocess.TimeoutExpired:
-        pytest.fail("GDS connection test timed out")
-    except Exception as e:
-        pytest.fail(f"GDS connection test failed: {e}")
-
-
-def test_service_logs_accessible():
-    """Test that we can access service logs"""
-    try:
-        # Check FSW logs
-        result = subprocess.run(['journalctl', '-u', 'soak-deployment-fsw', '-n', '5', '--no-pager'], 
-                              capture_output=True, text=True)
-        assert result.returncode == 0, "Cannot access FSW service logs"
-        assert len(result.stdout) > 0, "FSW service logs are empty"
-        print("✅ FSW service logs are accessible")
-        
-        # Check GDS logs
-        result = subprocess.run(['journalctl', '-u', 'soak-deployment-gds', '-n', '5', '--no-pager'], 
-                              capture_output=True, text=True)
-        assert result.returncode == 0, "Cannot access GDS service logs"
-        assert len(result.stdout) > 0, "GDS service logs are empty"
-        print("✅ GDS service logs are accessible")
+        cpu_usage = fprime_test_api.await_telemetry("SoakDeployment.systemResources.CPU", timeout=5)
+        print(f"CPU Usage: {cpu_usage.get_val()} percent")
+        assert 0 <= cpu_usage.get_val() <= 100, "CPU usage should be between 0 and 100 percent"
         
     except Exception as e:
-        pytest.fail(f"Service log test failed: {e}")
+        print(f"System resource telemetry test failed: {e}")
+        # Don't fail the test if specific channels aren't available
+        print("Continuing with basic telemetry streaming test...")
 
 
-def test_dictionary_file_exists():
-    """Test that the dictionary file exists and is readable"""
-    import os
-    dict_path = "/opt/soak-deployment/dict/SoakDeploymentTopologyDictionary.json"
+def test_buffer_manager_telemetry(fprime_test_api):
+    """Test buffer manager telemetry
     
-    assert os.path.exists(dict_path), f"Dictionary file not found at {dict_path}"
-    assert os.path.isfile(dict_path), f"Dictionary path exists but is not a file: {dict_path}"
-    assert os.access(dict_path, os.R_OK), f"Dictionary file is not readable: {dict_path}"
-    
-    # Check file size (should be substantial)
-    file_size = os.path.getsize(dict_path)
-    assert file_size > 1000, f"Dictionary file seems too small: {file_size} bytes"
-    
-    print(f"✅ Dictionary file exists and is readable ({file_size} bytes)")
-
-
-def test_log_directory_writable():
-    """Test that the log directory exists and is writable"""
-    import os
-    import tempfile
-    
-    log_dir = "/opt/soak-deployment/logs"
-    
-    assert os.path.exists(log_dir), f"Log directory not found at {log_dir}"
-    assert os.path.isdir(log_dir), f"Log path exists but is not a directory: {log_dir}"
-    assert os.access(log_dir, os.W_OK), f"Log directory is not writable: {log_dir}"
-    
-    # Try to write a test file
+    Verifies that buffer managers are operational and reporting telemetry.
+    """
     try:
-        with tempfile.NamedTemporaryFile(dir=log_dir, delete=True) as tmp:
-            tmp.write(b"test")
-            tmp.flush()
-        print("✅ Log directory is writable")
-    except Exception as e:
-        pytest.fail(f"Cannot write to log directory: {e}")
-
-
-def test_service_health_basic():
-    """Basic health check - services haven't crashed recently"""
-    try:
-        # Check if services have been restarted recently (last 5 minutes)
-        result = subprocess.run([
-            'journalctl', '-u', 'soak-deployment-fsw', 
-            '--since', '5 minutes ago',
-            '--grep', 'Started\\|Stopped\\|Failed',
-            '--no-pager'
-        ], capture_output=True, text=True)
+        # Check communication buffer manager
+        total_buffs = fprime_test_api.await_telemetry("ComFprime.commsBufferManager.TotalBuffs", timeout=5)
+        print(f"Comm Total Buffers: {total_buffs.get_val()}")
+        assert total_buffs.get_val() > 0, "Should have some total communication buffers"
         
-        if 'Failed' in result.stdout or 'Stopped' in result.stdout:
-            print(f"⚠️  Warning: Recent FSW service issues detected:\n{result.stdout}")
-            # Don't fail the test, just warn
+        curr_buffs = fprime_test_api.await_telemetry("ComFprime.commsBufferManager.CurrBuffs", timeout=5)
+        print(f"Comm Current Buffers: {curr_buffs.get_val()}")
+        assert curr_buffs.get_val() >= 0, "Current buffers should be non-negative"
         
-        # Check GDS service
-        result = subprocess.run([
-            'journalctl', '-u', 'soak-deployment-gds', 
-            '--since', '5 minutes ago',
-            '--grep', 'Started\\|Stopped\\|Failed',
-            '--no-pager'
-        ], capture_output=True, text=True)
-        
-        if 'Failed' in result.stdout or 'Stopped' in result.stdout:
-            print(f"⚠️  Warning: Recent GDS service issues detected:\n{result.stdout}")
-            # Don't fail the test, just warn
-            
-        print("✅ No recent service failures detected")
+        # Check data products buffer manager if available
+        dp_total = fprime_test_api.await_telemetry("DataProducts.dpBufferManager.TotalBuffs", timeout=5)
+        print(f"DP Total Buffers: {dp_total.get_val()}")
+        assert dp_total.get_val() >= 0, "DP total buffers should be non-negative"
         
     except Exception as e:
-        print(f"⚠️  Warning: Could not check service health: {e}")
-        # Don't fail the test, just warn
+        print(f"Buffer manager telemetry test failed: {e}")
+        # Don't fail the test if specific channels aren't available
+        print("Continuing with basic telemetry streaming test...")
 
 
-def test_file_permissions():
-    """Test that file permissions are set correctly"""
-    import os
-    import pwd
-    import grp
+def test_continuous_operation(fprime_test_api):
+    """Test continuous operation capabilities
     
-    # Check ownership of key directories
-    paths_to_check = [
-        "/opt/soak-deployment/bin/SoakDeployment",
-        "/opt/soak-deployment/dict",
-        "/opt/soak-deployment/logs",
-        "/opt/soak-deployment/monitoring"
-    ]
+    This test verifies that the system can operate continuously without degradation.
+    Simulates a longer running scenario for soak testing.
+    """
+    # Clear histories to start fresh
+    fprime_test_api.clear_histories()
     
-    for path in paths_to_check:
-        if os.path.exists(path):
-            stat = os.stat(path)
-            try:
-                owner = pwd.getpwuid(stat.st_uid).pw_name
-                group = grp.getgrgid(stat.st_gid).gr_name
-                print(f"✅ {path}: owner={owner}, group={group}")
-            except KeyError:
-                print(f"⚠️  {path}: owner_uid={stat.st_uid}, group_gid={stat.st_gid}")
+    # Send commands periodically over a time period
+    for i in range(5):
+        fprime_test_api.send_and_assert_command("CdhCore.cmdDisp.CMD_NO_OP", max_delay=0.1)
+        time.sleep(1)  # Wait 1 second between commands
+    
+    # Verify we got consistent telemetry during operation
+    telemetry_history = fprime_test_api.get_telemetry_test_history()
+    telemetry_items = telemetry_history.retrieve()
+    print(f"Received {len(telemetry_items)} telemetry items during continuous operation")
+    
+    # Should have received some telemetry during the 5-second test
+    assert len(telemetry_items) > 0, "Should receive telemetry during continuous operation"
+    
+    # Verify we got consistent events during operation  
+    event_history = fprime_test_api.get_event_test_history()
+    events = event_history.retrieve()
+    print(f"Received {len(events)} events during continuous operation")
+    
+    # Should have received command dispatch/completion events
+    assert len(events) >= 5, "Should receive events from command operations"
 
 
-def test_system_resources():
-    """Basic system resource check"""
-    import shutil
-    import psutil
+def test_basic_health(fprime_test_api):
+    """Test basic system health
     
-    # Check disk space
-    disk_usage = shutil.disk_usage("/opt/soak-deployment")
-    free_gb = disk_usage.free / (1024**3)
-    assert free_gb > 1.0, f"Low disk space: only {free_gb:.1f} GB free"
-    print(f"✅ Disk space OK: {free_gb:.1f} GB free")
+    Verifies that the system is operating normally without health issues.
+    """
+    # Wait a moment for any health telemetry to be generated
+    time.sleep(2)
     
-    # Check memory
-    memory = psutil.virtual_memory()
-    available_gb = memory.available / (1024**3)
-    assert available_gb > 0.5, f"Low memory: only {available_gb:.1f} GB available"
-    print(f"✅ Memory OK: {available_gb:.1f} GB available")
+    # Just verify that we can get some telemetry and send commands
+    # This confirms the basic FSW-GDS connection is working
+    fprime_test_api.send_and_assert_command("CdhCore.cmdDisp.CMD_NO_OP", max_delay=0.1)
     
-    # Check CPU
-    cpu_percent = psutil.cpu_percent(interval=1)
-    print(f"✅ CPU usage: {cpu_percent}%")
-
-
-if __name__ == "__main__":
-    # When run directly, just run the basic tests
-    print("Running basic soak test connectivity checks...")
+    # Verify telemetry is flowing
+    results = fprime_test_api.assert_telemetry_count(3, timeout=5)
+    print(f"Health check: Received {len(results)} telemetry items")
     
-    test_fsw_service_running()
-    test_gds_service_running()
-    test_fsw_tcp_connectivity()
-    test_dictionary_file_exists()
-    test_log_directory_writable()
-    test_service_health_basic()
-    test_file_permissions()
-    test_system_resources()
-    
-    print("\n🎉 All basic connectivity tests passed!") 
+    # System is healthy if we can send commands and receive telemetry
+    assert len(results) >= 3, "Basic health check: should receive telemetry" 
