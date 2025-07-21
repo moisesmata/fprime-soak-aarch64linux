@@ -1,65 +1,20 @@
 """soak_integration_tests.py:
 
-Traditional F' integration tests for SoakDeployment using fprime_test_api.
-These tests connect to the running systemd services and perform standard F' testing.
-Based on the LED blinker soak test pattern.
+Integration tests for SoakDeployment using the standard F' integration test pattern.
+These tests follow the same structure as LED blinker and Ref integration tests.
+
+The fprime_test_api fixture automatically handles:
+- Dictionary detection from build artifacts  
+- Connection to running FSW/GDS
+- Support for --dictionary command line argument
+
+Usage:
+  pytest soak_integration_tests.py                           # Auto-detect build artifacts
+  pytest --dictionary <path-to-dict> soak_integration_tests.py  # Explicit dictionary
 """
 
 import time
-import os
-from pathlib import Path
-import pytest
 from fprime_gds.common.testing_fw import predicates
-
-
-@pytest.fixture(scope="session", autouse=True)
-def configure_deployment_root():
-    """Configure the working directory to the deployment root for settings.ini detection"""
-    # Get the current test file location
-    test_file = Path(__file__)
-    # Navigate up to the deployment root (two levels up from test/int/)
-    deployment_root = test_file.parent.parent.parent
-    
-    # Change to deployment root directory so settings.ini can be found
-    original_cwd = os.getcwd()
-    os.chdir(deployment_root)
-    
-    print(f"Changed working directory to: {deployment_root}")
-    print(f"Settings file should be at: {deployment_root / 'settings.ini'}")
-    
-    # Verify settings.ini exists
-    settings_file = deployment_root / "settings.ini"
-    if settings_file.exists():
-        print(f"✅ Found settings.ini at {settings_file}")
-    else:
-        print(f"⚠️  Warning: settings.ini not found at {settings_file}")
-    
-    yield
-    
-    # Restore original working directory
-    os.chdir(original_cwd)
-
-
-@pytest.fixture(scope="session", autouse=True)  
-def configure_soak_deployment_dictionary():
-    """Configure dictionary path for soak deployment testing"""
-    
-    # Check if we're running against an installed soak deployment service
-    installed_dict_path = Path("/opt/soak-deployment/dict/SoakDeploymentTopologyDictionary.json")
-    
-    if installed_dict_path.exists():
-        print(f"✅ Detected installed soak deployment at {installed_dict_path}")
-        # Set environment variable to override dictionary path detection
-        os.environ["DICTIONARY"] = str(installed_dict_path)
-        print(f"📚 Using installed dictionary: {installed_dict_path}")
-    else:
-        print("📚 Using auto-detected build artifacts (development mode)")
-    
-    yield
-    
-    # Clean up environment variable if we set it
-    if "DICTIONARY" in os.environ and str(installed_dict_path) in os.environ["DICTIONARY"]:
-        del os.environ["DICTIONARY"]
 
 
 def test_is_streaming(fprime_test_api):
