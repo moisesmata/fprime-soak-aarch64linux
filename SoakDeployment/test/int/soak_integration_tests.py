@@ -40,6 +40,28 @@ def configure_deployment_root():
     os.chdir(original_cwd)
 
 
+@pytest.fixture(scope="session", autouse=True)  
+def configure_soak_deployment_dictionary():
+    """Configure dictionary path for soak deployment testing"""
+    
+    # Check if we're running against an installed soak deployment service
+    installed_dict_path = Path("/opt/soak-deployment/dict/SoakDeploymentTopologyDictionary.json")
+    
+    if installed_dict_path.exists():
+        print(f"✅ Detected installed soak deployment at {installed_dict_path}")
+        # Set environment variable to override dictionary path detection
+        os.environ["DICTIONARY"] = str(installed_dict_path)
+        print(f"📚 Using installed dictionary: {installed_dict_path}")
+    else:
+        print("📚 Using auto-detected build artifacts (development mode)")
+    
+    yield
+    
+    # Clean up environment variable if we set it
+    if "DICTIONARY" in os.environ and str(installed_dict_path) in os.environ["DICTIONARY"]:
+        del os.environ["DICTIONARY"]
+
+
 def test_is_streaming(fprime_test_api):
     """Test that SoakDeployment is streaming telemetry
     
