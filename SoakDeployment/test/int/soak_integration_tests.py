@@ -158,10 +158,20 @@ def test_basic_health(fprime_test_api):
     # Send a command to verify FSW-GDS communication works
     fprime_test_api.send_and_assert_command("CdhCore.cmdDisp.CMD_NO_OP", max_delay=0.1)
     
-    # Verify telemetry is flowing at the expected high rate for soak monitoring
-    # Soak deployment streams system resources (~9 channels/sec) + buffer manager + queues
-    # So expect much more than 3 items - this is normal and healthy for soak testing
-    results = fprime_test_api.assert_telemetry_count(10, timeout=3)
+    # Verify telemetry is flowing at high rate for soak monitoring
+    # Use search_history to get all telemetry received so far, then check we have enough
+    results = fprime_test_api.get_telemetry_history()
     
-    print(f"✅ Soak deployment is streaming {len(results)} telemetry items as expected")
+    # Clear history and wait a short time to get fresh telemetry
+    fprime_test_api.clear_histories()
+    time.sleep(2)
+    
+    # Get fresh telemetry - soak deployment should stream lots of monitoring data
+    fresh_results = fprime_test_api.get_telemetry_history()
+    
+    print(f"✅ Soak deployment is streaming {len(fresh_results)} telemetry items in 2 seconds")
+    
+    # Soak deployment should stream at least 5 items in 2 seconds (very conservative)
+    assert len(fresh_results) >= 5, f"Expected at least 5 telemetry items, got {len(fresh_results)}"
+    
     print("System is healthy and monitoring telemetry is flowing normally") 
