@@ -59,8 +59,10 @@ module SoakDeployment {
 
     connections ComFprime_CdhCore {
       # Core events and telemetry to communication queue
-      CdhCore.events.PktSend -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.EVENTS]
-      CdhCore.tlmSend.PktSend -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.TELEMETRY]
+      CdhCore.events.PktSend -> EventLoggerTee.comSplitter.comIn
+      EventLoggerTee.comSplitter.comOut -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.EVENTS]
+      CdhCore.tlmSend.PktSend -> TlmLoggerTee.comSplitter.comIn
+      TlmLoggerTee.comSplitter.comOut -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.TELEMETRY]
 
       # Router to Command Dispatcher
       ComFprime.fprimeRouter.commandOut -> CdhCore.cmdDisp.seqCmdBuff
