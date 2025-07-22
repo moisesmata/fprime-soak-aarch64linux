@@ -5,18 +5,22 @@
 // ======================================================================
 #ifndef SOAKDEPLOYMENT_SOAKDEPLOYMENTTOPOLOGYDEFS_HPP
 #define SOAKDEPLOYMENT_SOAKDEPLOYMENTTOPOLOGYDEFS_HPP
-//Subtopology PingEntries includes
+
+// Subtopology PingEntries includes
 #include "Svc/Subtopologies/CdhCore/PingEntries.hpp"
 #include "Svc/Subtopologies/ComFprime/PingEntries.hpp"
 #include "Svc/Subtopologies/DataProducts/PingEntries.hpp"
 #include "Svc/Subtopologies/FileHandling/PingEntries.hpp"
+
 #include "EventLoggerTee/PingEntries.hpp"
 #include "TlmLoggerTee/PingEntries.hpp"
 
-//SubtopologyTopologyDefs includes
+// SubtopologyTopologyDefs includes
 #include "Svc/Subtopologies/ComFprime/SubtopologyTopologyDefs.hpp"
 #include "Svc/Subtopologies/DataProducts/SubtopologyTopologyDefs.hpp"
 #include "Svc/Subtopologies/FileHandling/SubtopologyTopologyDefs.hpp"
+
+// Include autocoded FPP constants
 #include "SoakDeployment/Top/FppConstantsAc.hpp"
 
 /**
@@ -46,6 +50,7 @@ namespace PingEntries {
 
 // Definitions are placed within a namespace named after the deployment
 namespace SoakDeployment {
+
 /**
  * \brief required type definition to carry state
  *

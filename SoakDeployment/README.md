@@ -47,8 +47,8 @@ cd SoakDeployment/build-artifacts/<platform>/bin/
   - Health monitoring system
   - Fatal error handling
 
-- **ComCcsds**: Communication Subsystem
-  - ComCcsds protocol implementation
+- **ComFprime**: Communication Subsystem
+  - ComFprime protocol implementation
   - Uplink/downlink data handling
   - Frame processing and routing
 

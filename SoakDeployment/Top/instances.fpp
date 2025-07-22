@@ -9,7 +9,6 @@ module SoakDeployment {
     constant STACK_SIZE = 64 * 1024
   }
 
-
   # ----------------------------------------------------------------------
   # Active component instances
   # ----------------------------------------------------------------------
@@ -45,7 +44,5 @@ module SoakDeployment {
   instance systemResources: Svc.SystemResources base id 0x01060000
 
   instance linuxTimer: Svc.LinuxTimer base id 0x01070000
-
-
 
 }

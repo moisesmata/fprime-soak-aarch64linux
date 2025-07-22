@@ -10,9 +10,6 @@
 ###
 # Topology and Components
 ###
-# ComLoggerTee subtopology instances for logging (must come first)
-add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/EventLoggerTee/")
-add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/TlmLoggerTee/")
 
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
 

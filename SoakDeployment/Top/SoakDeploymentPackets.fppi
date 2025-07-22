@@ -1,5 +1,3 @@
-
-
 telemetry packets SoakDeploymentPackets {
 
   packet CDH id 1 group 1 {

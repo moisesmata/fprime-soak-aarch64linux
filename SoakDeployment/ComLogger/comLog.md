@@ -1,1 +1,0 @@
- ### Please run the python script to convert the binary log files in here to csv

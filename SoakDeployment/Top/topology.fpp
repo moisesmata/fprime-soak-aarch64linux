@@ -19,6 +19,7 @@ module SoakDeployment {
     import ComFprime.Subtopology
     import DataProducts.Subtopology
     import FileHandling.Subtopology
+
     import EventLoggerTee.Subtopology
     import TlmLoggerTee.Subtopology
     
@@ -56,13 +57,10 @@ module SoakDeployment {
   # Direct graph specifiers
   # ----------------------------------------------------------------------
 
-    connections ComCcsds_CdhCore {
-      # Core events and telemetry to logging subtopologies, then to communication queue
-      CdhCore.events.PktSend -> EventLoggerTee.comSplitter.comIn
-      EventLoggerTee.comSplitter.comOut -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.EVENTS]
-      
-      CdhCore.tlmSend.PktSend -> TlmLoggerTee.comSplitter.comIn
-      TlmLoggerTee.comSplitter.comOut -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.TELEMETRY]
+    connections ComFprime_CdhCore {
+      # Core events and telemetry to communication queue
+      CdhCore.events.PktSend -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.EVENTS]
+      CdhCore.tlmSend.PktSend -> ComFprime.comQueue.comPacketQueueIn[ComFprime.Ports_ComPacketQueue.TELEMETRY]
 
       # Router to Command Dispatcher
       ComFprime.fprimeRouter.commandOut -> CdhCore.cmdDisp.seqCmdBuff
@@ -111,6 +109,7 @@ module SoakDeployment {
       rateGroup3.RateGroupMemberOut[2] -> DataProducts.dpBufferManager.schedIn
       rateGroup3.RateGroupMemberOut[3] -> DataProducts.dpWriter.schedIn
       rateGroup3.RateGroupMemberOut[4] -> DataProducts.dpMgr.schedIn
+
     }
 
     connections SoakDeployment {

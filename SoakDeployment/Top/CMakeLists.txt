@@ -18,7 +18,6 @@ register_fprime_module(
         "${CMAKE_CURRENT_LIST_DIR}/SoakDeploymentTopology.cpp"
     DEPENDS
         Fw_Logger
-        # ComLoggerTee subtopology instances for logging
-        SoakDeployment_Top_EventLoggerTee
-        SoakDeployment_Top_TlmLoggerTee
 )
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/EventLoggerTee/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/TlmLoggerTee/")
