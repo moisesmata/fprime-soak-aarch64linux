@@ -9,11 +9,14 @@ build-fprime-*
 
 # Misc
 /venv/
+/.venv/
 /fprime-venv/
 /.idea/
 /.vscode/
 .DS_Store
 *.gcov
+
+SoakDeployment/test/int/__pycache__/
 
 # ComLogger Files
 *.com
